@@ -1,4 +1,5 @@
 from easydict import EasyDict
+import pdb
 
 # ==============================================================
 # begin of the most frequently changed config specified by the user
@@ -16,9 +17,10 @@ reanalyze_ratio = 0
 # ==============================================================
 
 cartpole_muzero_config = dict(
-    exp_name=f'data_muzero/cartpole_muzero_ns{num_simulations}_upc{update_per_collect}_rer{reanalyze_ratio}_seed0',
+    # exp_name=f'data_muzero/cartpole_muzero_ns{num_simulations}_upc{update_per_collect}_rer{reanalyze_ratio}_seed0',
+    exp_name=f'data_muzero/othello_muzero_ns{num_simulations}_upc{update_per_collect}_rer{reanalyze_ratio}_seed0',
     env=dict(
-        env_id='CartPole-v0',
+        env_id='Othello-v0',
         continuous=False,
         manually_discretization=False,
         collector_env_num=collector_env_num,
@@ -28,8 +30,8 @@ cartpole_muzero_config = dict(
     ),
     policy=dict(
         model=dict(
-            observation_shape=4,
-            action_space_size=2,
+            observation_shape=64,
+            action_space_size=64,
             model_type='mlp', 
             lstm_hidden_size=128,
             latent_state_dim=128,
@@ -40,9 +42,9 @@ cartpole_muzero_config = dict(
         # (str) The path of the pretrained model. If None, the model will be initialized by the default model.
         model_path=None,
         cuda=True,
-        env_type='not_board_games',
+        env_type='board_games',
         action_type='varied_action_space',
-        game_segment_length=50,
+        game_segment_length=50, # 무슨 역할을 하는지 알아야함
         update_per_collect=update_per_collect,
         batch_size=batch_size,
         optim_type='Adam',
@@ -64,8 +66,10 @@ main_config = cartpole_muzero_config
 
 cartpole_muzero_create_config = dict(
     env=dict(
-        type='cartpole_lightzero',
-        import_names=['zoo.classic_control.cartpole.envs.cartpole_lightzero_env'],
+        # type='cartpole_lightzero',
+        type='othello_lightzero',
+        # import_names=['zoo.classic_control.cartpole.envs.cartpole_lightzero_env'],
+        import_names=['zoo.board_games.othello.envs.othello_lightzero_env'],
     ),
     env_manager=dict(type='subprocess'),
     policy=dict(
@@ -88,5 +92,5 @@ if __name__ == "__main__":
         Users can refer to lzero/envs/wrappers for more details.
         """
         from lzero.entry import train_muzero_with_gym_env as train_muzero
-
+    pdb.set_trace()
     train_muzero([main_config, create_config], seed=0, model_path=main_config.policy.model_path, max_env_step=max_env_step)

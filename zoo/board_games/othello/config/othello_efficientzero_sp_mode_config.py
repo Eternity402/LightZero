@@ -1,5 +1,5 @@
 from easydict import EasyDict
-import pdb
+
 # ==============================================================
 # begin of the most frequently changed config specified by the user
 # ==============================================================
@@ -15,8 +15,8 @@ reanalyze_ratio = 0.
 # end of the most frequently changed config specified by the user
 # ==============================================================
 
-tictactoe_muzero_config = dict(
-    exp_name=f'data_muzero/tictactoe_muzero_sp-mode_ns{num_simulations}_upc{update_per_collect}_rer{reanalyze_ratio}_seed0',
+tictactoe_efficientzero_config = dict(
+    exp_name=f'data_ez/tictactoe_efficientzero_sp-mode_ns{num_simulations}_upc{update_per_collect}_rer{reanalyze_ratio}_seed0',
     env=dict(
         battle_mode='self_play_mode',
         collector_env_num=collector_env_num,
@@ -26,9 +26,9 @@ tictactoe_muzero_config = dict(
     ),
     policy=dict(
         model=dict(
-            observation_shape=(3, 3, 3), # 왜 3일까? 대충 히스토리를 알기 위해서 그런건가
-            action_space_size=9, # 이건 예상에 맞고..
-            image_channel=3, # 채널 수가 3 -> 위에 생각한게 얼추 맞네
+            observation_shape=(3, 3, 3),
+            action_space_size=9,
+            image_channel=3,
             # We use the small size model for tictactoe.
             num_res_blocks=1,
             num_channels=16,
@@ -38,12 +38,15 @@ tictactoe_muzero_config = dict(
             support_scale=10,
             reward_support_size=21,
             value_support_size=21,
+            downsample=False,
+            discrete_action_encoding_type='one_hot',
         ),
         # (str) The path of the pretrained model. If None, the model will be initialized by the default model.
         model_path=None,
         cuda=True,
         env_type='board_games',
         action_type='varied_action_space',
+        use_augmentation=False,
         game_segment_length=9,
         update_per_collect=update_per_collect,
         batch_size=batch_size,
@@ -65,22 +68,22 @@ tictactoe_muzero_config = dict(
         evaluator_env_num=evaluator_env_num,
     ),
 )
-tictactoe_muzero_config = EasyDict(tictactoe_muzero_config)
-main_config = tictactoe_muzero_config
+tictactoe_efficientzero_config = EasyDict(tictactoe_efficientzero_config)
+main_config = tictactoe_efficientzero_config
 
-tictactoe_muzero_create_config = dict(
+tictactoe_efficientzero_create_config = dict(
     env=dict(
         type='tictactoe',
         import_names=['zoo.board_games.tictactoe.envs.tictactoe_env'],
     ),
     env_manager=dict(type='subprocess'),
     policy=dict(
-        type='muzero',
-        import_names=['lzero.policy.muzero'],
+        type='efficientzero',
+        import_names=['lzero.policy.efficientzero'],
     ),
 )
-tictactoe_muzero_create_config = EasyDict(tictactoe_muzero_create_config)
-create_config = tictactoe_muzero_create_config
+tictactoe_efficientzero_create_config = EasyDict(tictactoe_efficientzero_create_config)
+create_config = tictactoe_efficientzero_create_config
 
 if __name__ == "__main__":
     from lzero.entry import train_muzero

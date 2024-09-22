@@ -896,7 +896,10 @@ class MuZeroPolicy(Policy):
                 )
                 # NOTE: Convert the ``action_index_in_legal_action_set`` to the corresponding ``action`` in the
                 # entire action set.
-                action = np.where(action_mask[i] == 1.0)[0][action_index_in_legal_action_set]
+                try:
+                    action = np.where(action_mask[i] == 1.0)[0][action_index_in_legal_action_set]
+                except:
+                    import pdb;pdb.set_trace()
 
                 output[env_id] = {
                     'action': action,

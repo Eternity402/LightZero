@@ -2,9 +2,10 @@ import logging
 import os
 from functools import partial
 from typing import Optional, Tuple
+import pdb
 
 import torch
-from ding.config import compile_config
+from ding.config import compile_config # /opt/anaconda3/envs/lightzero/lib/python3.11/site-packages/ding/__init__.py -> 이건 뭐지? 이것도 모듈 중 하나인가; 
 from ding.envs import create_env_manager
 from ding.envs import get_vec_env_setting
 from ding.policy import create_policy
@@ -45,7 +46,6 @@ def train_muzero(
     Returns:
         - policy (:obj:`Policy`): Converged policy.
     """
-
     cfg, create_cfg = input_cfg
     assert create_cfg.policy.type in ['efficientzero', 'muzero', 'muzero_context', 'muzero_rnn_full_obs', 'sampled_efficientzero', 'gumbel_muzero', 'stochastic_muzero'], \
         "train_muzero entry now only support the following algo.: 'efficientzero', 'muzero', 'sampled_efficientzero', 'gumbel_muzero', 'stochastic_muzero'"
@@ -66,7 +66,7 @@ def train_muzero(
     else:
         cfg.policy.device = 'cpu'
 
-    cfg = compile_config(cfg, seed=seed, env=None, auto=True, create_cfg=create_cfg, save_cfg=True)
+    cfg = compile_config(cfg, seed=seed, env=None, auto=True, create_cfg=create_cfg, save_cfg=True) # 
     # Create main components: env, policy
     env_fn, collector_env_cfg, evaluator_env_cfg = get_vec_env_setting(cfg.env)
     collector_env = create_env_manager(cfg.env.manager, [partial(env_fn, cfg=c) for c in collector_env_cfg])
@@ -87,7 +87,7 @@ def train_muzero(
 
     # Create worker components: learner, collector, evaluator, replay buffer, commander.
     tb_logger = SummaryWriter(os.path.join('./{}/log/'.format(cfg.exp_name), 'serial')) if get_rank() == 0 else None
-    learner = BaseLearner(cfg.policy.learn.learner, policy.learn_mode, tb_logger, exp_name=cfg.exp_name)
+    learner = BaseLearner(cfg.policy.learn.learner, policy.learn_mode, tb_logger, exp_name=cfg.exp_name) # [gskim] 여기가 모델인 것 같은데? 맞음
 
     # ==============================================================
     # MCTS+RL algorithms related core code
@@ -113,7 +113,7 @@ def train_muzero(
         exp_name=cfg.exp_name,
         policy_config=policy_config
     )
-
+    # import pdb;pdb.set_trace()
     # ==============================================================
     # Main loop
     # ==============================================================
@@ -134,7 +134,7 @@ def train_muzero(
 
     # Evaluate the random agent
     stop, reward = evaluator.eval(learner.save_checkpoint, learner.train_iter, collector.envstep)
-
+    # import pdb;pdb.set_trace()
     while True:
         log_buffer_memory_usage(learner.train_iter, replay_buffer, tb_logger)
         log_buffer_run_time(learner.train_iter, replay_buffer, tb_logger)
@@ -148,7 +148,7 @@ def train_muzero(
             trained_steps=learner.train_iter
         )
 
-        if policy_config.eps.eps_greedy_exploration_in_collect:
+        if policy_config.eps.eps_greedy_exploration_in_collect: # in default, False
             epsilon_greedy_fn = get_epsilon_greedy_fn(
                 start=policy_config.eps.start,
                 end=policy_config.eps.end,
@@ -215,6 +215,8 @@ def train_muzero(
                         f'eval offline at train_iter: {train_iter}, collector_envstep: {collector_envstep}, reward: {reward}')
                 logging.info(f'eval offline finished!')
             break
+
+        # import pdb;pdb.set_trace()
 
     # Learner's after_run hook.
     learner.call_hook('after_run')
