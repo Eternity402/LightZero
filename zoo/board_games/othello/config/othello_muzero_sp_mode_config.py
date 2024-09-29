@@ -3,9 +3,9 @@ import pdb
 # ==============================================================
 # begin of the most frequently changed config specified by the user
 # ==============================================================
-collector_env_num = 8
+collector_env_num = 1
 n_episode = 8
-evaluator_env_num = 5
+evaluator_env_num = 1
 num_simulations = 200
 update_per_collect = 100
 batch_size = 256
