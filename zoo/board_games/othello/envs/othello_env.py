@@ -83,7 +83,7 @@ class OthelloEnv(BaseEnv):
         self.battle_mode_in_simulation_env = 'self_play_mode'
         self.board_size = 8
         self.players = [1, 2]
-        self.total_num_actions = 64
+        self.total_num_actions = 65 # env edit
         self.prob_random_agent = cfg.prob_random_agent
         self.prob_expert_agent = cfg.prob_expert_agent
         assert (self.prob_random_agent >= 0 and self.prob_expert_agent == 0) or (
@@ -261,30 +261,34 @@ class OthelloEnv(BaseEnv):
             # player 1 battle with expert player 2
 
             # player 1's turn
-            if self._replay_path is not None:
-                self._frames.append(self._env.render(mode='rgb_array'))
-            timestep_player1 = self._player_step(action)
-            # self.env.render()
-            if timestep_player1.done:
-                # NOTE: in eval_mode, we must set to_play as -1, because we don't consider the alternation between players.
-                # And the to_play is used in MCTS.
-                timestep_player1.obs['to_play'] = -1
-
+            if len(self.legal_actions) > 0 and (64 not in self.legal_actions):
                 if self._replay_path is not None:
-                    if not os.path.exists(self._replay_path):
-                        os.makedirs(self._replay_path)
-                    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-                    path = os.path.join(
-                        self._replay_path,
-                        'Othello_{}_{}_{}.mp4'.format(os.getpid(), timestamp, self._save_replay_count)
-                    )
-                    self.display_frames_as_mp4(self._frames, path)
-                    print(f'replay {path} saved!')
-                    self._save_replay_count += 1
+                    self._frames.append(self._env.render(mode='rgb_array'))
+                timestep_player1 = self._player_step(action)
+                # self.env.render()
+                if timestep_player1.done:
+                    # NOTE: in eval_mode, we must set to_play as -1, because we don't consider the alternation between players.
+                    # And the to_play is used in MCTS.
+                    timestep_player1.obs['to_play'] = -1
 
-                return timestep_player1
+                    if self._replay_path is not None:
+                        if not os.path.exists(self._replay_path):
+                            os.makedirs(self._replay_path)
+                        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+                        path = os.path.join(
+                            self._replay_path,
+                            'Othello_{}_{}_{}.mp4'.format(os.getpid(), timestamp, self._save_replay_count)
+                        )
+                        self.display_frames_as_mp4(self._frames, path)
+                        print(f'replay {path} saved!')
+                        self._save_replay_count += 1
 
+                    return timestep_player1
+            elif 64 in self.legal_actions:
+                timestep_player1= self._player_step(64)
             # player 2's turn
+            if (timestep_player1.obs['to_play']!=2):
+                return timestep_player1
             if self.agent_vs_human:
                 bot_action = self.human_to_action()
             else:
@@ -316,30 +320,30 @@ class OthelloEnv(BaseEnv):
                     self.display_frames_as_mp4(self._frames, path)
                     print(f'replay {path} saved!')
                     self._save_replay_count += 1
-
             return timestep
 
     def _player_step(self, action):
 
         if action in self.legal_actions:
-            row, col = self.action_to_coord(action)
-            self.board[row, col] = self.current_player
-            # Flip the opponent's discs based on the Othello rules
-            directions = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]
-            opponent = 3 - self.current_player  # If current player is 1, opponent is 2 and vice versa
-            
-            for dx, dy in directions:
-                x, y = row + dx, col + dy
-                pieces_to_flip = []
+            if action != 64:
+                row, col = self.action_to_coord(action)
+                self.board[row, col] = self.current_player
+                # Flip the opponent's discs based on the Othello rules
+                directions = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]
+                opponent = 3 - self.current_player  # If current player is 1, opponent is 2 and vice versa
                 
-                while 0 <= x < 8 and 0 <= y < 8 and self.board[x, y] == opponent:
-                    pieces_to_flip.append((x, y))
-                    x += dx
-                    y += dy
-                
-                if 0 <= x < 8 and 0 <= y < 8 and self.board[x, y] == self.current_player:
-                    for fx, fy in pieces_to_flip:
-                        self.board[fx, fy] = self.current_player
+                for dx, dy in directions:
+                    x, y = row + dx, col + dy
+                    pieces_to_flip = []
+                    
+                    while 0 <= x < 8 and 0 <= y < 8 and self.board[x, y] == opponent:
+                        pieces_to_flip.append((x, y))
+                        x += dx
+                        y += dy
+                    
+                    if 0 <= x < 8 and 0 <= y < 8 and self.board[x, y] == self.current_player:
+                        for fx, fy in pieces_to_flip:
+                            self.board[fx, fy] = self.current_player
         else:
             logging.warning(
                 f"You input illegal action: {action}, the legal_actions are {self.legal_actions}. "
@@ -367,8 +371,18 @@ class OthelloEnv(BaseEnv):
 
         # Check whether the game is ended or not and give the winner
         done, winner = self.get_done_winner()
-
-        reward = np.array(float(winner == self.current_player)).astype(np.float32)
+        # print(done, winner)
+        # print(self.current_player)
+        # print(self.next_player)
+        if done:
+            if winner == -1:
+                reward = np.array(float(0)).astype(np.float32)
+            elif winner == self.current_player:
+                reward = np.array(float((self.board==winner).sum() - 32)).astype(np.float32)
+            elif winner == self.next_player:
+                reward = reward = np.array(float(32 - (self.board==winner).sum())).astype(np.float32)   
+        else:
+            reward = np.array(float(winner == self.current_player)).astype(np.float32)
         info = {'next player to play': self.next_player}
         """
         NOTE: here exchange the player
@@ -377,8 +391,10 @@ class OthelloEnv(BaseEnv):
         
         # check if next_player has legal actions
         if (len(self.legal_actions) == 0) and (not done) :
+            # here should not be passed
             info = {'next player to play': self.next_player}
             self.current_player = self.next_player
+            import pdb;pdb.set_trace()
 
         if done:
             info['eval_episode_return'] = reward
@@ -571,12 +587,12 @@ class OthelloEnv(BaseEnv):
             try:
                 row = int(
                     input(
-                        f"Enter the row (1, 2, or 3, from up to bottom) to play for the player {self.current_player}: "
+                        f"Enter the row (1 ~ 8, from up to bottom) to play for the player {self.current_player}: "
                     )
                 )
                 col = int(
                     input(
-                        f"Enter the column (1, 2 or 3, from left to right) to play for the player {self.current_player}: "
+                        f"Enter the column (1 ~ 8, from left to right) to play for the player {self.current_player}: "
                     )
                 )
                 choice = self.coord_to_action(row - 1, col - 1)

@@ -3,9 +3,9 @@ from easydict import EasyDict
 # ==============================================================
 # begin of the most frequently changed config specified by the user
 # ==============================================================
-collector_env_num = 8
-n_episode = 8
-evaluator_env_num = 5
+collector_env_num = 1
+n_episode = 1
+evaluator_env_num = 1
 num_simulations = 25
 update_per_collect = 50
 batch_size = 256
@@ -23,6 +23,7 @@ tictactoe_muzero_config = dict(
         evaluator_env_num=evaluator_env_num,
         n_evaluator_episode=evaluator_env_num,
         manager=dict(shared_memory=False, ),
+        agent_vs_human=True,
     ),
     policy=dict(
         model=dict(
@@ -35,9 +36,9 @@ tictactoe_muzero_config = dict(
             fc_reward_layers=[8],
             fc_value_layers=[8],
             fc_policy_layers=[8],
-            support_scale=10,
-            reward_support_size=21,
-            value_support_size=21,
+            support_scale=1,
+            reward_support_size=3,
+            value_support_size=3,
             norm_type='BN', 
         ),
         # (str) The path of the pretrained model. If None, the model will be initialized by the default model.
@@ -74,7 +75,7 @@ tictactoe_muzero_create_config = dict(
         type='tictactoe',
         import_names=['zoo.board_games.tictactoe.envs.tictactoe_env'],
     ),
-    env_manager=dict(type='subprocess'),
+    env_manager=dict(type='base'),
     policy=dict(
         type='muzero',
         import_names=['lzero.policy.muzero'],

@@ -2,7 +2,7 @@ import logging
 import os
 from functools import partial
 from typing import Optional, Tuple
-import pdb
+import pdb, time
 
 import torch
 from ding.config import compile_config # /opt/anaconda3/envs/lightzero/lib/python3.11/site-packages/ding/__init__.py -> 이건 뭐지? 이것도 모듈 중 하나인가; 
@@ -61,10 +61,11 @@ def train_muzero(
     elif create_cfg.policy.type == 'stochastic_muzero':
         from lzero.mcts import StochasticMuZeroGameBuffer as GameBuffer
 
-    if cfg.policy.cuda and torch.cuda.is_available():
-        cfg.policy.device = 'cuda'
-    else:
-        cfg.policy.device = 'cpu'
+    # if cfg.policy.cuda and torch.cuda.is_available():
+    #     cfg.policy.device = 'cuda'
+    # else:
+    #     cfg.policy.device = 'cpu'
+    cfg.policy.device = 'mps'
 
     cfg = compile_config(cfg, seed=seed, env=None, auto=True, create_cfg=create_cfg, save_cfg=True) # 
     # Create main components: env, policy
@@ -78,9 +79,10 @@ def train_muzero(
 
     if cfg.policy.eval_offline:
         cfg.policy.learn.learner.hook.save_ckpt_after_iter = cfg.policy.eval_freq
-
     policy = create_policy(cfg.policy, model=model, enable_field=['learn', 'collect', 'eval'])
-
+    policy._eval_model.to(torch.device('mps'))
+    policy._device = 'mps'
+    # import pdb;pdb.set_trace()
     # load pretrained model
     if model_path is not None:
         policy.learn_mode.load_state_dict(torch.load(model_path, map_location=cfg.policy.device))

@@ -615,7 +615,7 @@ def to_torch_float_tensor(data_list: Union[np.ndarray, List[np.ndarray]], device
     elif isinstance(data_list, list) and all(isinstance(data, np.ndarray) for data in data_list):
         output_data_list = []
         for data in data_list:
-            output_data_list.append(torch.from_numpy(data).to(device).float())
+            output_data_list.append(torch.from_numpy(data.astype(np.float32)).to(device).float())
         return output_data_list
     else:
         raise TypeError("The type of input must be np.ndarray or List[np.ndarray]")

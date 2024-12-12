@@ -31,5 +31,7 @@ def legal_actions_cython(int32_t[:, :] board, int32_t player):
                     if has_opponent_between and 0 <= x < n and 0 <= y < n and board[x, y] == player:
                         legal_actions.append(i * n + j)
                         break
-    
-    return legal_actions
+    if len(legal_actions) ==0:
+        return [64]
+    else:
+        return legal_actions

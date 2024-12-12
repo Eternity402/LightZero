@@ -436,8 +436,9 @@ class MuZeroEvaluator(ISerialEvaluator):
             episode_return = np.mean(episode_return)
             if episode_return > self._max_episode_return:
                 if save_ckpt_fn:
-                    save_ckpt_fn('ckpt_best.pth.tar')
+                    save_ckpt_fn(f'ckpt_best_{train_iter}.pth.tar')
                 self._max_episode_return = episode_return
+            save_ckpt_fn('iteration_{}.pth.tar'.format(train_iter))
             stop_flag = episode_return >= self._stop_value and train_iter > 0
             if stop_flag:
                 self._logger.info(
